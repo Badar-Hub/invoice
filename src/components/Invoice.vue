@@ -10,7 +10,7 @@
           :label="labels.invoiceNo"
           class="q-py-sm"
           v-model="data.invoiceNo"
-          outlined
+          :outlined="!generateInvoice"
         />
       </div>
     </div>
@@ -22,13 +22,13 @@
         <q-input
           :label="labels.ntnNumber"
           class="q-my-sm"
-          outlined
+          :outlined="!generateInvoice"
           v-model="data.ntnNumber"
         />
         <q-input
           :label="labels.strnNumber"
           class="q-my-sm"
-          outlined
+          :outlined="!generateInvoice"
           v-model="data.strnNumber"
         />
       </div>
@@ -101,7 +101,8 @@
       >
         <q-input
           label="Description of service or product..."
-          outlined
+          :outlined="!generateInvoice"
+          :borderless="generateInvoice"
           v-model="item.name"
         />
       </div>
@@ -112,13 +113,13 @@
             : 'col-xs-12 col-sm-1 q-px-sm q-my-sm'
         "
       >
-        <q-input label="Qty" outlined type="number" v-model="item.quantity" />
+        <q-input :borderless="generateInvoice" label="Qty" :outlined="!generateInvoice" type="number" v-model="item.quantity" />
       </div>
       <div
         v-if="!(data.type === 'DELIVERY CHALLAN')"
         class="col-xs-12 col-sm-2 q-px-sm q-my-sm"
       >
-        <q-input label="Rate" outlined type="number" v-model="item.rate" />
+        <q-input :borderless="generateInvoice"  label="Rate" :outlined="!generateInvoice" type="number" v-model="item.rate" />
       </div>
       <div
         v-if="!(data.type === 'DELIVERY CHALLAN')"
@@ -150,7 +151,7 @@
           class="q-my-sm"
           type="textarea"
           :label="labels.notes"
-          outlined
+          :outlined="!generateInvoice"
           v-model="data.notes"
         />
       </div>
@@ -160,26 +161,26 @@
       >
         <q-input
           :label="labels.subtotal"
-          outlined
+          :outlined="!generateInvoice"
           class="q-px-xl q-my-sm"
           v-model="data.subtotal"
         />
         <q-input
           :label="labels.total"
-          outlined
+          :outlined="!generateInvoice"
           class="q-px-xl q-my-sm"
           v-model="data.total"
         />
         <q-input
           v-show="data.type === 'SALE TAX INVOICE'"
           :label="labels.gst"
-          outlined
+          :outlined="!generateInvoice"
           class="q-px-xl q-my-sm"
           v-model="data.amountPaid"
         />
         <q-input
           :label="labels.balanceDue"
-          outlined
+          :outlined="!generateInvoice"
           class="q-px-xl q-my-sm"
           v-model="data.balanceDue"
         />
@@ -191,7 +192,7 @@
     label="Change Labels"
     @click="changeLabel = !changeLabel"
   />
-  <q-btn class="q-my-xl" @click="printInvoice" label="Print Invoice" />
+  <q-btn class="q-my-xl" @click="generateInvoiceStore = true" label="Print Invoice" />
   <Modal
     @close="changeLabel = !changeLabel"
     title="Change Labels"
@@ -277,7 +278,7 @@
 </template>
 
 <script>
-import { ref, defineComponent } from 'vue';
+import { ref, defineComponent, onMounted } from 'vue';
 import print from 'print-js';
 import Modal from './Modal.vue';
 
@@ -315,7 +316,7 @@ export default defineComponent({
       strnNumber: 'STRN Number',
       address: 'Address',
       billTo: 'Bill To',
-      shipTo: 'Shop To',
+      shipTo: 'Ship To',
       items: {
         name: 'Description of service or product...',
         quantity: 0,
@@ -346,6 +347,7 @@ export default defineComponent({
     const printInvoice = () => {
       print('invoice', 'html');
     };
+    const generateInvoice = ref(false)
     const addNewItem = () => {
       data.value.items.push({
         name: '',
@@ -361,6 +363,22 @@ export default defineComponent({
       );
     };
 
+    const generateInvoiceStore = () => {
+      generateInvoice.value = true;
+      localStorage.setItem('invoice', data.value);
+      console.log(localStorage.getItem('invoice'));
+    }
+
+    onMounted(async() => {
+      try {
+        console.log(localStorage.getItem('invoice'));
+        data.value = await JSON.parse(localStorage.getItem('invoice'))
+        console.log(data.value);
+      } catch (error) {
+        console.log(error);
+      }
+    })
+
     return {
       data,
       labels,
@@ -370,6 +388,8 @@ export default defineComponent({
       changeLabel,
       printInvoice,
       invoiceTypes,
+      generateInvoice,
+      generateInvoiceStore
     };
   },
 });
