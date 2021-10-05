@@ -122,14 +122,9 @@
       </div>
       <div
         v-if="!(data.type === 'DELIVERY CHALLAN')"
-        class="col-xs-12 col-sm-2 q-px-sm q-my-sm"
+        class="col-xs-12 col-sm-2 q-px-sm q-my-auto"
       >
-        <q-input
-          label="Amount"
-          outlined
-          type="number"
-          :value="(item.amount = item.rate * item.quantity)"
-        />
+        <h6 class="q-my-sm">{{item.quantity * item.rate}}</h6>
       </div>
       <div v-show="hoverMouse" class="col-xs-12 col-sm-1 q-my-auto">
         <q-icon
