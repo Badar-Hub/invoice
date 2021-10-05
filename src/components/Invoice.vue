@@ -1,11 +1,18 @@
 <template>
-  <div @keypress.="" id="invoice" class="width-center bordered">
-    <div class="row">
+  <div class="width-center">
+    <div class="row justify-between">
       <div class="col-xs-12 col-sm-6 q-px-sm">
         <img src="@/assets/logo.png" class="header-logo q-py-sm" />
       </div>
-      <div class="col-xs-12 col-sm-6 q-my-auto q-px-sm">
+      <div class="col-xs-12 col-sm-3 q-my-auto q-px-sm">
         <h4 class="q-my-sm text-right">{{ data.type }}</h4>
+      </div>
+    </div>
+    <div class="row justify-between q-px-sm">
+      <div class="col-xs-12 col-sm-6 q-my-auto q-px-sm">
+        <h3 class="q-my-none">{{ data.companyName }}</h3>
+      </div>
+      <div class="col-xs-12 col-sm-3">
         <q-input
           :label="labels.invoiceNo"
           class="q-py-sm"
@@ -14,17 +21,19 @@
         />
       </div>
     </div>
-    <div class="row">
-      <div class="col-xs-12 col-sm-6 q-my-auto q-px-sm">
-        <h4 class="q-my-sm">{{ data.companyName }}</h4>
-      </div>
-      <div class="col-xs-12 col-sm-6 q-px-sm">
+    <div
+      v-show="data.type === 'SALE TAX INVOICE'"
+      class="row justify-end q-my-sm"
+    >
+      <div class="col-xs-12 col-sm-3 q-px-sm text-right">
         <q-input
           :label="labels.ntnNumber"
           class="q-my-sm"
           :outlined="!generateInvoice"
           v-model="data.ntnNumber"
         />
+      </div>
+      <div class="col-xs-12 col-sm-3">
         <q-input
           :label="labels.strnNumber"
           class="q-my-sm"
@@ -39,7 +48,7 @@
           class="q-pa-xs"
           type="textarea"
           :label="labels.billTo"
-          v-model="billTo"
+          v-model="data.billTo"
           outlined
         />
       </div>
@@ -48,7 +57,7 @@
           class="q-pa-xs"
           type="textarea"
           :label="labels.shipTo"
-          v-model="shipTo"
+          v-model="data.shipTo"
           outlined
         />
       </div>
@@ -113,19 +122,38 @@
             : 'col-xs-12 col-sm-1 q-px-sm q-my-sm'
         "
       >
-        <q-input :borderless="generateInvoice" label="Qty" :outlined="!generateInvoice" type="number" v-model="item.quantity" />
+        <q-input
+          :borderless="generateInvoice"
+          label="Qty"
+          :outlined="!generateInvoice"
+          type="number"
+          v-model="item.quantity"
+        />
       </div>
       <div
         v-if="!(data.type === 'DELIVERY CHALLAN')"
         class="col-xs-12 col-sm-2 q-px-sm q-my-sm"
       >
-        <q-input :borderless="generateInvoice"  label="Rate" :outlined="!generateInvoice" type="number" v-model="item.rate" />
+        <q-input
+          :borderless="generateInvoice"
+          label="Rate"
+          :outlined="!generateInvoice"
+          type="number"
+          v-model="item.rate"
+        />
       </div>
       <div
         v-if="!(data.type === 'DELIVERY CHALLAN')"
         class="col-xs-12 col-sm-2 q-px-sm q-my-auto"
       >
-        <h6 class="q-my-sm">{{item.quantity * item.rate}}</h6>
+        <h6 class="q-my-sm text-body1">
+          PKR
+          {{
+            (item.quantity * item.rate)
+              .toString()
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+          }}
+        </h6>
       </div>
       <div v-show="hoverMouse" class="col-xs-12 col-sm-1 q-my-auto">
         <q-icon
@@ -157,33 +185,52 @@
       </div>
       <div
         v-if="data.type === 'INVOICE' || data.type === 'SALE TAX INVOICE'"
-        class="col-xs-12 col-sm-6 q-px-sm"
+        class="col-xs-12 col-sm-6 q-px-sm text-right q-px-xl"
       >
         <q-input
+          v-if="!generateInvoice"
           :label="labels.subtotal"
           :outlined="!generateInvoice"
           class="q-px-xl q-my-sm"
           v-model="data.subtotal"
         />
+        <h6 v-else class="q-my-sm">
+          <strong> {{ labels.subtotal }}</strong
+          >: PKR
+          {{ data.subtotal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') }}
+        </h6>
         <q-input
+          v-if="!generateInvoice"
+          v-show="data.type === 'SALE TAX INVOICE'"
+          :label="labels.gst"
+          :outlined="!generateInvoice"
+          class="q-px-xl q-my-sm"
+          v-model="data.gst"
+        />
+        <h6 v-else class="q-my-sm">
+          <strong> GST ({{ data.gst }}%)</strong>: PKR -
+          {{
+            ((data.subtotal * 16) / 100)
+              .toString()
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+          }}
+        </h6>
+        <q-input
+          v-if="!generateInvoice"
           :label="labels.total"
           :outlined="!generateInvoice"
           class="q-px-xl q-my-sm"
           v-model="data.total"
         />
-        <q-input
-          v-show="data.type === 'SALE TAX INVOICE'"
-          :label="labels.gst"
-          :outlined="!generateInvoice"
-          class="q-px-xl q-my-sm"
-          v-model="data.amountPaid"
-        />
-        <q-input
-          :label="labels.balanceDue"
-          :outlined="!generateInvoice"
-          class="q-px-xl q-my-sm"
-          v-model="data.balanceDue"
-        />
+        <h6 v-else class="q-my-sm">
+          <strong> {{ labels.total }}</strong
+          >: PKR
+          {{
+            (data.total = Math.round(data.subtotal - (data.subtotal * 16) / 100)
+              .toString()
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ','))
+          }}
+        </h6>
       </div>
     </div>
   </div>
@@ -192,7 +239,9 @@
     label="Change Labels"
     @click="changeLabel = !changeLabel"
   />
-  <q-btn class="q-my-xl" @click="generateInvoiceStore = true" label="Print Invoice" />
+  <input label="Muhammad Bin Liaquat" mask="(999) 999-9999" />
+  <q-btn class="q-my-xl" @click="generateInvoiceStore" label="Print Invoice" />
+  <q-btn class="q-my-xl" @click="newInvoice" label="New Invoice" />
   <Modal
     @close="changeLabel = !changeLabel"
     title="Change Labels"
@@ -303,7 +352,7 @@ export default defineComponent({
       ],
       notes: '',
       subtotal: 0,
-      gst: 0,
+      gst: 16,
       amountPaid: 0,
       total: 0,
       balanceDue: 0,
@@ -347,7 +396,7 @@ export default defineComponent({
     const printInvoice = () => {
       print('invoice', 'html');
     };
-    const generateInvoice = ref(false)
+    const generateInvoice = ref(false);
     const addNewItem = () => {
       data.value.items.push({
         name: '',
@@ -363,21 +412,45 @@ export default defineComponent({
       );
     };
 
-    const generateInvoiceStore = () => {
-      generateInvoice.value = true;
-      localStorage.setItem('invoice', data.value);
-      console.log(localStorage.getItem('invoice'));
-    }
-
-    onMounted(async() => {
+    const generateInvoiceStore = async () => {
       try {
+        generateInvoice.value = true;
+        await localStorage.setItem('invoice', JSON.stringify(data.value));
         console.log(localStorage.getItem('invoice'));
-        data.value = await JSON.parse(localStorage.getItem('invoice'))
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const newInvoice = () => {
+      localStorage.removeItem('invoice');
+      data.value.type = 'INVOICE';
+      data.value.invoiceNo = 0;
+      data.value.gst = 0;
+      data.value.amountPaid = 0;
+      data.value.total = 0;
+      data.value.balanceDue = 0;
+      data.value.companyName = '';
+      data.value.ntnNumber = 0;
+      data.value.strnNumber = 0;
+      data.value.billTo = '';
+      data.value.shipTo = '';
+      data.value.items = [];
+      data.value.notes = '';
+    };
+
+    onMounted(async () => {
+      try {
+        const dataLocal = localStorage.getItem('invoice');
+        console.log(dataLocal);
+        if (dataLocal) {
+          data.value = await JSON.parse(localStorage.getItem('invoice'));
+        }
         console.log(data.value);
       } catch (error) {
         console.log(error);
       }
-    })
+    });
 
     return {
       data,
@@ -385,11 +458,12 @@ export default defineComponent({
       removeItem,
       addNewItem,
       hoverMouse,
+      newInvoice,
       changeLabel,
       printInvoice,
       invoiceTypes,
       generateInvoice,
-      generateInvoiceStore
+      generateInvoiceStore,
     };
   },
 });
