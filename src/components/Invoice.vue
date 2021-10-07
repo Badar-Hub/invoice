@@ -17,7 +17,7 @@
           :label="labels.invoiceNo"
           class="q-py-sm"
           v-model="data.invoiceNo"
-          :outlined="!generateInvoice"
+          :borderless="generateInvoice"
         />
       </div>
     </div>
@@ -25,19 +25,19 @@
       v-show="data.type === 'SALE TAX INVOICE'"
       class="row justify-end q-my-sm"
     >
-      <div class="col-xs-12 col-sm-3 q-px-sm text-right">
+      <div class="col-xs-12 col-sm-2 q-px-sm text-right">
         <q-input
           :label="labels.ntnNumber"
           class="q-my-sm"
-          :outlined="!generateInvoice"
+          :borderless="generateInvoice"
           v-model="data.ntnNumber"
         />
       </div>
-      <div class="col-xs-12 col-sm-3">
+      <div class="col-xs-12 col-sm-2">
         <q-input
           :label="labels.strnNumber"
           class="q-my-sm"
-          :outlined="!generateInvoice"
+          :borderless="generateInvoice"
           v-model="data.strnNumber"
         />
       </div>
@@ -49,7 +49,7 @@
           type="textarea"
           :label="labels.billTo"
           v-model="data.billTo"
-          outlined
+          borderless
         />
       </div>
       <div class="col-xs-12 col-sm-3 q-pr-sm">
@@ -58,11 +58,11 @@
           type="textarea"
           :label="labels.shipTo"
           v-model="data.shipTo"
-          outlined
+          borderless
         />
       </div>
     </div>
-    <div class="row q-my-sm header">
+    <div class="row q-my-sm header justify-start">
       <div
         :class="
           data.type === 'DELIVERY CHALLAN'
@@ -99,17 +99,18 @@
       @mouseleave="hoverMouse = false"
       v-for="(item, index) in data.items"
       :key="index"
+      :class="data.type === 'DELIVERY CHALLAN' ? 'justify-centet' : ''"
       class="row"
     >
       <div
         :class="
           data.type === 'DELIVERY CHALLAN'
-            ? 'col-xs-12 col-sm-9 q-px-sm q-my-sm'
-            : 'col-xs-12 col-sm-6 q-px-sm q-my-sm'
+            ? 'col-xs-12 col-sm-9 q-px-sm q-my-xs'
+            : 'col-xs-12 col-sm-6 q-px-sm q-my-xs'
         "
       >
         <q-input
-          label="Description of service or product..."
+          :label="item.name ? '' : 'Description of service or product...'"
           :outlined="!generateInvoice"
           :borderless="generateInvoice"
           v-model="item.name"
@@ -118,35 +119,39 @@
       <div
         :class="
           data.type === 'DELIVERY CHALLAN'
-            ? 'col-xs-12 col-sm-2 q-px-sm q-my-sm'
-            : 'col-xs-12 col-sm-1 q-px-sm q-my-sm'
+            ? 'col-xs-12 col-sm-2 q-px-sm q-my-auto q-mx-sm'
+            : 'col-xs-12 col-sm-1 q-px-sm q-my-auto q-mx-sm'
         "
       >
         <q-input
+          v-if="!item.quantity"
           :borderless="generateInvoice"
-          label="Qty"
+          :label="item.quantity ? '' : 'Qty'"
           :outlined="!generateInvoice"
           type="number"
           v-model="item.quantity"
         />
-      </div>
-      <div
-        v-if="!(data.type === 'DELIVERY CHALLAN')"
-        class="col-xs-12 col-sm-2 q-px-sm q-my-sm"
-      >
-        <q-input
-          :borderless="generateInvoice"
-          label="Rate"
-          :outlined="!generateInvoice"
-          type="number"
-          v-model="item.rate"
-        />
+        <h6 v-else class="text-body1 q-my-xs q-pt-md">{{ item.quantity }}</h6>
       </div>
       <div
         v-if="!(data.type === 'DELIVERY CHALLAN')"
         class="col-xs-12 col-sm-2 q-px-sm q-my-auto"
       >
-        <h6 class="q-my-sm text-body1">
+        <q-input
+          v-if="!generateInvoice"
+          :borderless="generateInvoice"
+          :label="item.rate ? '' : 'Rate'"
+          :outlined="!generateInvoice"
+          type="number"
+          v-model="item.rate"
+        />
+        <h6 v-else class="text-body1 q-my-xs q-pt-md">PKR {{ item.rate }}</h6>
+      </div>
+      <div
+        v-if="!(data.type === 'DELIVERY CHALLAN')"
+        class="col-xs-12 col-sm-2 q-px-sm q-my-auto"
+      >
+        <h6 class="q-my-xs text-body1 q-pt-md">
           PKR
           {{
             (item.quantity * item.rate)
@@ -167,6 +172,7 @@
     </div>
     <div class="row text-left q-px-md q-my-sm">
       <q-btn
+        v-show="!generateInvoice"
         rounded
         color="primary"
         :label="labels.addBtnLabel"
@@ -177,14 +183,13 @@
       <div class="col-xs-12 col-sm-6 q-px-md">
         <q-input
           class="q-my-sm"
-          type="textarea"
           :label="labels.notes"
-          :outlined="!generateInvoice"
+          :borderless="generateInvoice"
           v-model="data.notes"
         />
       </div>
       <div
-        v-if="data.type === 'INVOICE' || data.type === 'SALE TAX INVOICE'"
+        v-if="!(data.type === 'DELIVERY CHALLAN')"
         class="col-xs-12 col-sm-6 q-px-sm text-right q-px-xl"
       >
         <q-input
@@ -207,8 +212,8 @@
           class="q-px-xl q-my-sm"
           v-model="data.gst"
         />
-        <h6 v-else class="q-my-sm">
-          <strong> GST ({{ data.gst }}%)</strong>: PKR -
+        <h6 v-show="data.type === 'SALE TAX INVOICE'" v-else class="q-my-sm">
+          <strong> GST (-{{ data.gst }}%)</strong>: - PKR
           {{
             ((data.subtotal * 16) / 100)
               .toString()
@@ -222,7 +227,7 @@
           class="q-px-xl q-my-sm"
           v-model="data.total"
         />
-        <h6 v-else class="q-my-sm">
+        <h6 v-show="data.type === 'SALE TAX INVOICE'" v-else class="q-my-sm">
           <strong> {{ labels.total }}</strong
           >: PKR
           {{
@@ -230,6 +235,15 @@
               .toString()
               .replace(/\B(?=(\d{3})+(?!\d))/g, ','))
           }}
+        </h6>
+        <h6
+          v-if="generateInvoice"
+          v-show="!(data.type === 'SALE TAX INVOICE')"
+          class="q-my-sm"
+        >
+          <strong>{{ labels.total }}</strong
+          >: PKR
+          {{ data.subtotal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') }}
         </h6>
       </div>
     </div>
@@ -239,7 +253,6 @@
     label="Change Labels"
     @click="changeLabel = !changeLabel"
   />
-  <input label="Muhammad Bin Liaquat" mask="(999) 999-9999" />
   <q-btn class="q-my-xl" @click="generateInvoiceStore" label="Print Invoice" />
   <q-btn class="q-my-xl" @click="newInvoice" label="New Invoice" />
   <Modal
@@ -388,6 +401,7 @@ export default defineComponent({
     });
     const changeLabel = ref(false);
     const invoiceTypes = ref([
+      'QUOTATION',
       'INVOICE',
       'SALE TAX INVOICE',
       'DELIVERY CHALLAN',
